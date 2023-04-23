@@ -1,0 +1,35 @@
+server:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 1s
+    jwt_secret: ""
+  grpc:
+    addr: 0.0.0.0:9000
+    timeout: 1s
+  pay_notice:
+    addr: 0.0.0.0:8050
+    timeout: 1s
+  admin:
+    addr: 0.0.0.0:8060
+    timeout: 1s
+data:
+  database:
+    Dsn: "root:123456@tcp(localhost:3306)/test?timeout=2s&readTimeout=5s&writeTimeout=5s&parseTime=true&loc=Local&charset=utf8,utf8mb4"
+    ShowLog: true                   # 是否打印SQL日志
+    MaxIdleConn: 10                 # 最大闲置的连接数，0意味着使用默认的大小2， 小于0表示不使用连接池
+    MaxOpenConn: 60                 # 最大打开的连接数, 需要小于数据库配置中的max_connections数
+    ConnMaxLifeTime: 4000           # 单个连接最大存活时间，建议设置比数据库超时时长(wait_timeout)稍小一些
+  redis:
+    Addr: localhost:6379
+    Password: "123456"
+    DB: 1
+    MinIdleConn: 200
+    DialTimeout: 60s
+    ReadTimeout: 0.5s
+    WriteTimeout: 0.5s
+    PoolSize: 100
+    PoolTimeout: 240s
+    IsTrace: true
+biz:
+  aa: aa
+  bb: bb
