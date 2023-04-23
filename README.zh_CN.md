@@ -1,3 +1,4 @@
+[English](./README.md) | 简体中文
 ## 项目简介：
 ### go-template
 > Go 微服务 模板项目

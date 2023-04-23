@@ -1,3 +1,4 @@
+English | [简体中文](./README.zh_CN.md)
 ## Project Overview:
 ### go-template
 > A Go microservice template project
