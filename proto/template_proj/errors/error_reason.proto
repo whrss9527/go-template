@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package template_proj.errors;
+
+import "errors/errors.proto";
+
+option go_package = "template_proj.errors;errors";
+option java_multiple_files = true;
+option java_package = "template_proj.errors";
+
+enum ErrorReason {
+  // 设置缺省错误码
+  option (.errors.default_code) = 400;
+
+  // 未知异常
+  CANCELLATION_IN_PROGRESS = 0;
+
+  // 用户未找到
+  USER_NOT_FOUND = 1;
+  // 请求繁忙
+  REQUEST_BUSY = 2;
+  // 客户端版本需要升级
+  CLIENT_VERSION_NEEDS_TO_BE_UPGRADED = 3;
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "google/api/annotations.proto";
+option go_package = "api/template_proj/v1";
+// option java_multiple_files = true;
+// option java_package = "io.grpc.examples.xxxx";
+// option java_outer_classname = "xxxx";
+
+package template_proj.v1;
+// TemplateProj
+service TemplateProj{
+  // 登录
+  rpc Login(LoginReq)returns(LoginReply) {
+    option (google.api.http) = {
+      post: "/api/v1/user/login"
+      body: "*",
+    };
+  }
+
+
+}
+message LoginReq{
+  string account = 1;
+}
+message LoginReply{
+  string id = 1;
+}
