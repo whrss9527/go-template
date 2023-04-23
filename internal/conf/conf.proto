@@ -1,0 +1,71 @@
+syntax = "proto3";
+package kratos.api;
+
+option go_package = "simba-ranking/internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Bootstrap {
+  Server server = 1;
+  Data data = 2;
+  Biz biz = 3;
+}
+
+message Server {
+  message HTTP {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+    string jwt_secret = 4;
+  }
+  message GRPC {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message PayNotice{
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message Admin{
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+
+  HTTP http = 1;
+  GRPC grpc = 2;
+  PayNotice pay_notice = 3;
+  Admin admin = 4;
+}
+
+message Data {
+  message Database {
+    string Dsn = 1;
+    bool ShowLog = 2;
+    int64 MaxIdleConn = 3;
+    int64 MaxOpenConn = 4;
+    int64 ConnMaxLifeTime = 5;
+  }
+  message Redis {
+    string Addr = 1;
+    string Password = 2;
+    google.protobuf.Duration ReadTimeout = 3;
+    google.protobuf.Duration WriteTimeout = 4;
+    int32 DB = 5;
+    int32  MinIdleConn = 6;
+    google.protobuf.Duration DialTimeout = 7;
+    int32 PoolSize = 8;
+    google.protobuf.Duration PoolTimeout = 9;
+    bool IsTrace = 10;
+  }
+  Database database = 1;
+  Redis redis = 2;
+}
+
+message Biz{
+  string aa = 1;
+  string bb = 2;
+  string min_client_version = 3;
+}
