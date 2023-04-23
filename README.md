@@ -1,49 +1,49 @@
-## 项目简介：
+## Project Overview:
 ### go-template
-> Go 微服务 模板项目
-> 
-> 使用 [go-kratos](https://go-kratos.dev/docs/) 框架搭建的一个模板项目，用于快速搭建项目
->
+> A Go microservice template project
+
+> Built with the [go-kratos](https://go-kratos.dev/docs/) framework for quick project building
+
 > Go + Kratos + Gorm + GRPC + Docker + Jenkins + K8S
-> 
-功能：
-- [x] 配置中心
-- [x] 日志
-- [x] 限流
-- [x] 版本控制
+
+Features:
+- [x] Configuration center
+- [x] Logging
+- [x] Rate control
+- [x] Version control
 - [x] GRPC
 - [x] HTTP
-- [x] 依赖注入
+- [x] Dependency injection
 - [x] JWT
-- [x] 服务间调用
-- [x] 单元测试
-- [x] 集成测试
+- [x] Inter-service calls
+- [x] Unit testing
+- [x] Integration testing
 - [x] CI/CD ( Docker + Jenkins + K8S )
 - [x] Makefile
 - [x] Swagger
 
 
-## 开始使用
+## Getting Started
 
-###### 1. 安装依赖
-clone 项目到本地
+###### 1. Install dependencies
+Clone the project to your local machine
 ```sh
 $ make init 
 ```
 
 ---
-###### 2. 启动服务
+###### 2. Start services
 ```sh
 $ kratos run
 ```
 ---
-###### 3. 测试
+###### 3. Test
 ```sh
 $ cd internal/biz  # go to your test dirs
 $ go test -v 
 ```
 
-## 项目结构
+## Project Structure
 ```
 ├── api
 │    └── template_proj 
@@ -105,51 +105,48 @@ $ go test -v
 ├── Dockerfile
 └── openapi.yaml (swagger file, generate by make api)
 ```
-我们将项目的结构分为三层，分别是 api、biz、model。
 
-在 ``proto/template_proj/v1/xxx.proto`` 中定义了 api，这里的 api 是对外暴露的接口，也就是说，我们的业务逻辑是通过这里的接口暴露给外部的。
+We divide the project structure into three layers: api, biz, and model.
 
-定义完成后，使用 ``make api`` 命令，会在 ``api/template_proj/v1/xxx.go`` 中生成对应的接口
+The api is defined in "proto/template_proj/v1/xxx.proto". This api is the external interface, meaning that our business logic is exposed to the outside world through this interface.
 
-然后在 ``service/xxx.go`` 中实现这些接口，这里的 ``service`` 就是我们的业务逻辑入口。
+After the definition is complete, use the "make api" command to generate the corresponding interface in "api/template_proj/v1/xxx.go".
 
+Then implement these interfaces in "service/xxx.go". The "service" here is the entry point for our business logic.
 
 ---
 
-整体项目使用wire进行依赖注入。
+The wire framework is used for dependency injection in the overall project.
 
-在 cmd/server/wire.go 中定义了 ProviderSet，这里的 ProviderSet 就是我们的依赖注入的对象。
+ProviderSets are defined in cmd/server/wire.go. These ProviderSets are the objects used for dependency injection.
 
-在 biz、mysql、redis、server 中都有 ProviderSet，这些 ProviderSet 都是在 cmd/server/wire.go 中被注入的。
+ProviderSets are defined in biz, mysql, redis, and server, and these ProviderSets are injected in cmd/server/wire.go.
+
+> The dependency injection chain: `api -> service -> biz -> data`
 >
-> 依赖注入的链条：``api -> service -> biz -> data``
+> After implementing the interface in "service/xxx.go", we can implement the specific business in "biz/template.go" for "xxx.go" to call.
 >
-> 在 ``service/xxx.go`` 中实现接口后，我们就可以在 ``biz/template.go`` 中实现具体的业务供 ``xxx.go`` 调用。
+> After implementing the business logic in "biz/template.go", we can implement the corresponding database operation in "data/mysql/user.go".
 >
-> 在 ``biz/template.go`` 中实现业务逻辑后，我们就可以在 ``data/mysql/user.go`` 中实现对应的数据库操作。
->
-> 在 `service` 中注入`UseCase`，`UseCase`中注入`Repo`，`Repo`中注入`DB`
+> Inject "UseCase" in "service", inject "Repo" in "UseCase", and inject "DB" in "Repo".
+
 ---
 
+## API Documentation:
+Provide API interface documentation for other developers to understand the API interface of this microservice. After defining proto, use the "make api" command to generate the "openapi.yaml" file in the project root directory. You can use the "swagger" tool to view the interface documentation or directly import the interface documentation into tools such as Postman.
 
-
-## 接口文档：
-提供API接口文档，以便其他开发人员了解该微服务的API接口。
-定义好proto后，使用`make api`命令，会在项目根目录生成`openapi.yaml`文件，可以使用`swagger`工具查看接口文档，也可直接导入postman等工具查看接口文档。
-
-
-## 测试: 
+## Testing:
 
 #### 1. Mock DB
 
-在单元测试中，很重要的一项就是数据库的 Mock，数据库要在每次单元测试时作为一个干净的初始状态，并且每次运行速度不能太慢。
+In unit testing, it is crucial to mock the database, and the database needs to be in a clean initial state and cannot be slow every time it runs.
 
-###### (1). Mysql 的 Mock
+###### (1) Mysql's Mock
 
-这里使用到的是 github.com/dolthub/go-mysql-server 借鉴了这位大哥的方法 [如何针对 MySQL 进行 Fake 测试](https://juejin.cn/post/7131661977310461965)
+The approach used here is borrowed from this big brother's method [How to conduct Fake Testing for MySQL](https://juejin.cn/post/7131661977310461965)
 
-- ###### DB 的初始化
-  在 db 目录下
+- ###### Initialization of DB
+    In the db directory
 ```go
 type Config struct {
    DSN             string // write data source name.
@@ -160,7 +157,7 @@ type Config struct {
 
 var DB *gorm.DB
 
-// InitDbConfig 初始化Db
+// InitDbConfig initializes Db
 func InitDbConfig(c *conf.Data) {
    log.Info("Initializing Mysql")
    var err error
@@ -171,24 +168,24 @@ func InitDbConfig(c *conf.Data) {
    if DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
       QueryFields: true,
       NamingStrategy: schema.NamingStrategy{
-         //TablePrefix:   "",   // 表名前缀
-         SingularTable: true, // 使用单数表名
+         //TablePrefix:   "",   // Table name prefix
+         SingularTable: true, // Use singular table name
       },
    }); err != nil {
-      panic(fmt.Errorf("初始化数据库失败: %s \n", err))
+      panic(fmt.Errorf("Failed to initialize the database: %s \n", err))
    }
    sqlDB, err := DB.DB()
    if sqlDB != nil {
-      sqlDB.SetMaxIdleConns(int(maxIdleConns))                               // 空闲连接数
-      sqlDB.SetMaxOpenConns(int(maxOpenConns))                               // 最大连接数
-      sqlDB.SetConnMaxLifetime(time.Second * time.Duration(connMaxLifetime)) // 单位：秒
+      sqlDB.SetMaxIdleConns(int(maxIdleConns))                               // Number of idle connections
+      sqlDB.SetMaxOpenConns(int(maxOpenConns))                               // Maximum number of connections
+      sqlDB.SetConnMaxLifetime(time.Second * time.Duration(connMaxLifetime)) // Unit: seconds
    }
    log.Info("Mysql: initialization completed")
 }
 ```
 
-- ###### fake-mysql 的初始化和注入
-  在 fake_mysql 目录下
+- ###### Initialization and Injection of fake-mysql
+    In the fake_mysql directory
 
 ```go
 var (
@@ -244,7 +241,7 @@ func createTestDatabase() *memory.Database {
 }
 
 func migrateTable() {
-// 生成一个user表到fake mysql中
+// Generate a user table to fake mysql
    err := db.DB.AutoMigrate(&model.User{})
    if err != nil {
       panic(err)
@@ -252,19 +249,21 @@ func migrateTable() {
 }
 ```
 
-在单元测试开始，调用  ```InitFakeDb()``` 即可
+Call ```InitFakeDb()``` at the beginning of unit testing.
 
 ```go
 func setup() {
    fake_mysql.InitFakeDb()
 }
 ```
+
 ---
-###### (2). Redis 的 Mock
-这里用到的是 [miniredis](https://github.com/alicebob/miniredis) , 与之配套的Redis Client 是  ```go-redis/redis/v8``` ，在这里调用 InitTestRedis() 注入即可
+
+###### (2) Redis's Mock
+We use [miniredis](https://github.com/alicebob/miniredis) here, and the Redis Client that matches it is `go-redis/redis/v8`. Invoke InitTestRedis() to inject it.
 
 ```go
-// RedisClient redis 客户端  
+// RedisClient redis client  
 var RedisClient *redis.Client  
   
 // ErrRedisNotFound not exist in redisconst ErrRedisNotFound = redis.Nil  
@@ -284,7 +283,7 @@ type Config struct {
    EnableTrace bool  
 }  
   
-// Init 实例化一个redis client  
+// Init instantiates a Redis client.  
 func Init(c *conf.Data) *redis.Client {  
    RedisClient = redis.NewClient(&redis.Options{  
       Addr:         c.Redis.Addr,  
@@ -311,13 +310,13 @@ func Init(c *conf.Data) *redis.Client {
    return RedisClient  
 }  
   
-// InitTestRedis 实例化一个可以用于单元测试的redis  
+// InitTestRedis instantiates a Redis client for unit testing.  
 func InitTestRedis() {  
    mr, err := miniredis.Run()  
    if err != nil {  
       panic(err)  
    }  
-   // 打开下面命令可以测试链接关闭的情况  
+   // Uncomment the following command to test the case where the link is closed.  
    // defer mr.Close()  
   
    RedisClient = redis.NewClient(&redis.Options{  
@@ -327,17 +326,16 @@ func InitTestRedis() {
 }
 ```
 
-#### 2. 单元测试
+#### 2. Unit Testing
 
-经过对比，我选择了 [goconvey](https://github.com/smartystreets/goconvey/wiki/Documentation) 这个单元测试框架
-它比原生的go testing 好用很多。goconvey还提供了很多好用的功能：
+After comparison, I chose the unit testing framework [goconvey](https://github.com/smartystreets/goconvey/wiki/Documentation) because it is much easier to use than the native go testing framework. goconvey also provides many useful features:
 
--   多层级嵌套单测
--   丰富的断言
--   清晰的单测结果
--   支持原生go test
+-  Multi-level nested testing
+-  Rich assertions
+-  Clear test results
+-  Support for native go test
 
-使用
+Use
 ```cmd
 go get github.com/smartystreets/goconvey
 ```
@@ -362,19 +360,18 @@ func TestLoverUsecase_DailyVisit(t *testing.T) {
    })  
 }
 ```
-	可以看到，函数签名和 go 原生的 test 是一致的
-	测试中嵌套了两层 Convey，外层new了内层Convey所需的参数 
-	内层调用了函数，对返回值进行了断言
+As you can see, the function signature is consistent with the original go test.
+The testing is nested in two levels of Convey, with the outer layer newing the parameters required by the inner-layer Convey.
+The inner layer calls the function and performs assertion on the return value.
 
-这里的断言也可以像这样对返回值进行比较 `So(x, ShouldEqual, 2)`
-或者判断长度等等 `So(len(resMap),ShouldEqual, 2)`
+Assertions can also compare return values like this `So(x, ShouldEqual, 2)` or judge the length, etc. `So(len(resMap), ShouldEqual, 2)`
 
-Convey的嵌套也可以灵活多层，可以像一棵多叉树一样扩展，足够满足业务模拟。
+The nesting of Convey can be flexible and multi-level, extending like a multi-branch tree, which can meet the needs of business simulation.
 
 ---
 
 #### 3. TestMain
-为所有的 case 加上一个 TestMain 作为统一入口
+Add a TestMain to serve as a unified entry for all cases
 
 ```go
 import (  
@@ -397,12 +394,11 @@ func setup() {
 }
 ```
 
-## 贡献
-欢迎提交PR，或者提出issue
+## Contribution
+Pull requests and/or issues are welcome.
 
-## 许可证
+## License
 MIT License
 
-## 作者
+## Author
 Gmail:  [whrss9527@gamil.com](mailto:whrss9527@gmail.com)
-
