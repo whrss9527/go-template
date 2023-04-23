@@ -1,0 +1,42 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: TemplateProj API
+    description: TemplateProj
+    version: 0.0.1
+paths:
+    /api/v1/user/login:
+        post:
+            tags:
+                - TemplateProj
+            description: 登录
+            operationId: TemplateProj_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/template_proj.v1.LoginReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/template_proj.v1.LoginReply'
+components:
+    schemas:
+        template_proj.v1.LoginReply:
+            type: object
+            properties:
+                id:
+                    type: string
+        template_proj.v1.LoginReq:
+            type: object
+            properties:
+                account:
+                    type: string
+tags:
+    - name: TemplateProj
