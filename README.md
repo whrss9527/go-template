@@ -26,10 +26,10 @@ Features:
 
 ## Getting Started
 
-###### 1. Install dependencies
-Clone the project to your local machine
+###### 1. Install dependencies & plugins
+Clone the project to your local machine, then execute the following command
 ```sh
-$ make init 
+$ sudo make init 
 ```
 
 ---
