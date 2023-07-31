@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	v1 "go-template/api/template_proj/v1"
 	"go-template/internal/conf"
@@ -13,6 +14,7 @@ import (
 func NewGRPCServer(c *conf.Server, templateService *service.TemplateService, logger log.Logger) *grpc.Server {
 	var opts = []grpc.ServerOption{
 		grpc.Middleware(
+			tracing.Server(), // 链路追踪
 			recovery.Recovery(),
 		),
 	}

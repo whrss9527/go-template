@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
@@ -45,6 +46,7 @@ func NewWhiteListMatcher() selector.MatchFunc {
 func NewHTTPServer(cs *conf.Server, cb *conf.Biz, service *service.TemplateService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
+			tracing.Server(), // 链路追踪
 			recovery.Recovery(),
 			DetermineMinimumVersion(cb),
 			selector.Server(

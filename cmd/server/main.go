@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"go-template/internal/conf"
 	"go-template/internal/pkg/db"
-	"go-template/internal/pkg/redis"
+	"go-template/internal/pkg/trace"
+	"go.opentelemetry.io/otel"
 	"os"
 
 	logdef "github.com/go-kratos/kratos/contrib/log/logrus/v2"
@@ -48,14 +50,21 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 }
 
 func main() {
+	// 配置，启动链路追踪
+	Name = "go-template"
+	id = "go-template"
+	Version = "test-V0.0.1"
+	traceConf := trace.NewConf(Name, id, Version)
+	tp, _ := traceConf.TracerProvider()
+	otel.SetTracerProvider(tp) // 为全局链路追踪
 	flag.Parse()
-
 	logFmt := logrus.New()
 	logFmt.Formatter = &logrus.JSONFormatter{}
 	logFmt.SetLevel(logrus.InfoLevel)
 	logger := logdef.NewLogger(logFmt)
 	logger = log.With(logger,
 		"caller", log.DefaultCaller,
+		"trace_id", tracing.TraceID(),
 	)
 	c := config.New(
 		config.WithSource(
@@ -88,7 +97,7 @@ func main() {
 		panic(err)
 	}
 
-	redis.Init(bc.Data)
+	//redis.Init(bc.Data)
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {
