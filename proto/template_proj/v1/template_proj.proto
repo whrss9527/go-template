@@ -19,6 +19,7 @@ service TemplateProj{
 
 }
 message LoginReq{
+  // 账号
   string account = 1;
 }
 message LoginReply{

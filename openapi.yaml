@@ -38,5 +38,6 @@ components:
             properties:
                 account:
                     type: string
+                    description: 账号
 tags:
     - name: TemplateProj
