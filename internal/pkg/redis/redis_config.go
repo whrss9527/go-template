@@ -2,10 +2,9 @@ package redis
 
 import (
 	"context"
-	"fmt"
-	"github.com/alicebob/miniredis/v2"
-	"go-template/internal/conf"
 	"time"
+
+	"go-template/internal/conf"
 
 	"github.com/go-redis/redis/extra/redisotel/v8"
 	"github.com/go-redis/redis/v8"
@@ -57,19 +56,4 @@ func Init(c *conf.Data) *redis.Client {
 	}
 
 	return RedisClient
-}
-
-// InitTestRedis 实例化一个可以用于单元测试的redis
-func InitTestRedis() {
-	mr, err := miniredis.Run()
-	if err != nil {
-		panic(err)
-	}
-	// 打开下面命令可以测试链接关闭的情况
-	// defer mr.Close()
-
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr: mr.Addr(),
-	})
-	fmt.Println("mini redis addr:", mr.Addr())
 }

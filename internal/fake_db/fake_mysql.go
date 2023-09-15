@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+
 	"go-template/internal/conf"
 	"go-template/internal/data/model"
 	"go-template/internal/pkg/db"

@@ -2,17 +2,17 @@ package biz
 
 import (
 	"fmt"
-	"go-template/internal/data/model"
-	fake_mysql "go-template/internal/fake-mysql"
-	"go-template/internal/pkg/db"
-	"go-template/internal/pkg/redis"
 	"os"
 	"testing"
+
+	"go-template/internal/data/model"
+	fakeDb "go-template/internal/fake_db"
+	"go-template/internal/pkg/db"
 )
 
 func setup() {
-	fake_mysql.InitFakeDb()
-	redis.InitTestRedis()
+	fakeDb.InitFakeDb()
+	fakeDb.InitTestRedis()
 
 	result := db.DB.Create(&model.User{
 		Id: "user1",
