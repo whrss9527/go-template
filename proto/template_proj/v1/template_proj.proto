@@ -21,6 +21,7 @@ service TemplateProj{
 message LoginReq{
   // 账号
   string account = 1;
+  string account_type = 2[json_name="account_type"];
 }
 message LoginReply{
   string id = 1;

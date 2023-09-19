@@ -39,5 +39,7 @@ components:
                 account:
                     type: string
                     description: 账号
+                account_type:
+                    type: string
 tags:
     - name: TemplateProj
