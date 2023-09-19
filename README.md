@@ -395,6 +395,67 @@ func setup() {
 }
 ```
 
+## Some Issues Encountered
+
+#### 1. Issue with Proto Interface Definitions
+
+When defining proto interfaces with fields named in the `a_b` format, they are automatically converted to `aB` when generating OpenAPI documentation. This inconsistency in field names between the interface documentation and the actual code can be resolved by using the `json_name` tag. Here is an example:
+
+```proto
+message LoginReq {
+  // Account
+  string account = 1;
+  string account_type = 2 [json_name = "account_type"];
+}
+```
+
+#### 2. Lack of Native Support for Content-Types Other than JSON
+
+The system does not natively support Content-Types other than JSON, such as XML or HTML. To handle other Content-Types, you need to implement a custom `ResponseEncoder` and register it in the `http.go` file. Here's an example of a custom `ResponseEncoder` in Go:
+
+```go
+func ResponseEncoder(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	
+	respContentType := r.Header.Get("Response-Content-Type")
+	if respContentType != "" && respContentType != "application/json" {
+		switch respContentType {
+		case "application/xml":
+			w.Header().Set("Content-Type", "application/xml")
+
+		case "application/x-protobuf":
+			w.Header().Set("Content-Type", "application/x-protobuf")
+		default:
+			w.Header().Set("Content-Type", "application/json")
+		}
+		body := data.(v1.HttpBody)
+		w.Write(data.Data)
+	} else {
+		// Serialize the data to JSON
+		jsonRes, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonRes)
+	}
+	return nil
+}
+```
+
+To register this custom `ResponseEncoder` in `http.go`, you can use the following code:
+
+```go
+var opts = []http.ServerOption{
+    // Custom response data structure
+    http.ResponseEncoder(middleware.ResponseEncoder), // Replace the default response data structure
+    http.Middleware(),
+}
+```
+
+#### 3. Limited ORM Support
+
+The system's support for Object-Relational Mapping (ORM) is relatively weak, and many features need to be implemented manually. However, this provides flexibility and room for custom implementation according to your specific requirements.
+
 ## Contribution
 Pull requests and/or issues are welcome.
 

@@ -397,6 +397,73 @@ func setup() {
    redis.InitTestRedis()
 }
 ```
+----
+
+## 遇到的一些问题
+#### 1. proto接口定义时，设置为`a_b`命名的字段，在转为openapi文档时，回自动转为`aB`，导致接口文档中的字段名不一致，使用json_name的tag进行解决。
+```proto
+message LoginReq{
+  // 账号
+  string account = 1;
+  string account_type = 2[json_name="account_type"];
+}
+```
+#### 2. 无法原生支持json以外的其他Content-Type返回，比如xml html等，需要自己实现一个ResponseEncoder，然后在http.go中注册
+
+```go 
+func ResponseEncoder(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	
+	respContentType := r.Header.Get("Response-Content-Type")
+	if respContentType != "" && respContentType != "application/json" {
+		switch respContentType {
+		case "application/xml":
+			w.Header().Set("Content-Type", "application/xml")
+
+		case "application/x-protobuf":
+			w.Header().Set("Content-Type", "application/x-protobuf")
+		default:
+			w.Header().Set("Content-Type", "application/json")
+		}
+		body := data.(v1.HttpBody)
+		w.Write(data.Data)
+	} else {
+		///**********************************/
+		//codec := encoding.GetCodec("json")  //这两行的目的就是为了把要返回的数据进行序列化
+		//xxRes, err := codec.Marshal(data)    //也可采用上面函数errorEncoder中的方法或者下面的直接JSON序列化
+		jsonRes, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonRes)
+
+	}
+	return nil
+}
+```
+然后注册在http.go中
+```go
+var opts = []http.ServerOption{
+    // 自定义返回数据结构
+    http.ResponseEncoder(middlewire.ResponseEncoder), // 替代默认的返回数据结构
+    http.Middleware(),
+}
+
+```
+
+定义一个返回数据结构
+```protobuf
+
+message HttpBody {
+  // The HTTP Content-Type header value specifying the content type of the body.
+  string content_type = 1;
+
+  // The HTTP request/response body as raw binary.
+  bytes data = 2;
+}
+
+```
+#### 3. ORM的支持偏弱，比较多的东西需要自己实现。同时也算给了比较大的空间吧。
 
 ## 贡献
 欢迎提交PR，或者提出issue
