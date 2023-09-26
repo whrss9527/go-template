@@ -1,22 +1,30 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
-	"go-template/internal/conf"
-	"go-template/internal/pkg/db"
-	"go-template/internal/pkg/trace"
-	"go.opentelemetry.io/otel"
+	"fmt"
 	"os"
+	"time"
 
-	logdef "github.com/go-kratos/kratos/contrib/log/logrus/v2"
+	"github.com/go-kratos/kratos/v2/middleware"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	"github.com/go-kratos/kratos/v2/transport"
+	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"go-template/internal/conf"
+	"go-template/internal/pkg/trace"
+
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	"github.com/sirupsen/logrus"
+
+	zaplog "go-template/internal/pkg/log"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
@@ -49,6 +57,16 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 	)
 }
 
+func customMiddleware(handler middleware.Handler) middleware.Handler {
+	return func(ctx context.Context, req interface{}) (reply interface{}, err error) {
+		if tr, ok := transport.FromServerContext(ctx); ok {
+			fmt.Println("operation:", tr.Operation())
+		}
+		reply, err = handler(ctx, req)
+		return
+	}
+}
+
 func main() {
 	// 配置，启动链路追踪
 	Name = "go-template"
@@ -58,24 +76,54 @@ func main() {
 	tp, _ := traceConf.TracerProvider()
 	otel.SetTracerProvider(tp) // 为全局链路追踪
 	flag.Parse()
-	logFmt := logrus.New()
-	logFmt.Formatter = &logrus.JSONFormatter{}
-	logFmt.SetLevel(logrus.InfoLevel)
-	logger := logdef.NewLogger(logFmt)
-	logger = log.With(logger,
-		"caller", log.DefaultCaller,
-		"trace_id", tracing.TraceID(),
+	encoder := zapcore.EncoderConfig{
+		TimeKey:    "t",
+		LevelKey:   "level",
+		NameKey:    "logger",
+		CallerKey:  "caller",
+		MessageKey: "msg",
+		// StacktraceKey: "stack",
+		EncodeTime: func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(t.Format("2006-01-02 15:04:05"))
+		},
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		// EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+
+	zlogger := zaplog.NewZapLogger(
+		"./log.txt",
+		encoder,
+		zap.NewAtomicLevelAt(zapcore.DebugLevel),
+		zap.AddStacktrace(
+			zap.NewAtomicLevelAt(zapcore.ErrorLevel)),
+		zap.AddCaller(),
+		zap.AddCallerSkip(0),
+		zap.Development(),
 	)
+
+	// 原有的输出到控制台上
+	// logger := log.With(log.NewStdLogger(os.Stdout),
+	// 输出到日志中
+	logger := log.With(zlogger,
+		// "ts", log.DefaultTimestamp,
+		"caller", log.DefaultCaller,
+		// "service.id", id,
+		// "service.name", Name,
+		// "service.version", Version,
+		"trace_id", tracing.TraceID(),
+		// "span_id", tracing.SpanID(),
+	)
+
+	log.SetLogger(logger)
 	c := config.New(
 		config.WithSource(
 			file.NewSource(flagconf),
 		),
 	)
 	defer c.Close()
-	logFmt.Info(logrus.Fields{
-		"common": "this is a common filed",
-		"other":  "i also should be logged always",
-	})
+
 	if err := c.Load(); err != nil {
 		panic(err)
 	}
@@ -92,10 +140,10 @@ func main() {
 	defer cleanup()
 
 	// 连接数据库
-	db.InitDbConfig(bc.Data)
-	if err != nil {
-		panic(err)
-	}
+	//db.InitDbConfig(bc.Data)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	//redis.Init(bc.Data)
 

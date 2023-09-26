@@ -12,6 +12,7 @@ import (
 	"go-template/internal/biz"
 	"go-template/internal/conf"
 	"go-template/internal/data/mysql"
+	"go-template/internal/interfaces"
 	"go-template/internal/server"
 	"go-template/internal/service"
 )
@@ -25,7 +26,8 @@ func wireApp(confServer *conf.Server, confBiz *conf.Biz, logger log.Logger) (*kr
 	templateUsecase := biz.NewTemplateUsecase(logger, usecaseManager, confBiz, templateRepo)
 	templateService := service.NewTemplateService(templateUsecase)
 	grpcServer := server.NewGRPCServer(confServer, templateService, logger)
-	httpServer := server.NewHTTPServer(confServer, confBiz, templateService, logger)
+	ginService := interfaces.NewGinService(templateUsecase, logger)
+	httpServer := server.NewHTTPServer(confServer, confBiz, templateService, logger, ginService)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 	}, nil
