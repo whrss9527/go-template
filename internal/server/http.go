@@ -4,21 +4,24 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
+
 	e "go-template/api/template_proj/errors"
 	v1 "go-template/api/template_proj/v1"
 	"go-template/internal/conf"
+	"go-template/internal/interfaces"
 	redisClient "go-template/internal/pkg/redis"
 	"go-template/internal/service"
 	"go-template/internal/util"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
@@ -34,6 +37,7 @@ func NewWhiteListMatcher() selector.MatchFunc {
 	whiteList := make(map[string]struct{})
 	// rules： /package.service/function in your .proto file
 	whiteList["/template_proj.v1.TemplateProj/Login"] = struct{}{}
+	whiteList["/template_proj.v1.TemplateProj/Test2"] = struct{}{}
 	return func(ctx context.Context, operation string) bool {
 		if _, ok := whiteList[operation]; ok {
 			return false
@@ -43,8 +47,11 @@ func NewWhiteListMatcher() selector.MatchFunc {
 }
 
 // NewHTTPServer new a HTTP server.
-func NewHTTPServer(cs *conf.Server, cb *conf.Biz, service *service.TemplateService, logger log.Logger) *http.Server {
+func NewHTTPServer(cs *conf.Server, cb *conf.Biz, service *service.TemplateService, logger log.Logger,
+	user *interfaces.GinService, // 新增参数
+) *http.Server {
 	var opts = []http.ServerOption{
+		//http.ResponseEncoder(middlewire.ResponseEncoder), // 替代默认的返回数据结构
 		http.Middleware(
 			tracing.Server(), // 链路追踪
 			recovery.Recovery(),
@@ -80,25 +87,26 @@ func NewHTTPServer(cs *conf.Server, cb *conf.Biz, service *service.TemplateServi
 		opts = append(opts, http.Timeout(cs.Http.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
+	// inject gin router
+	srv.HandlePrefix("/gin", interfaces.RegisterHTTPServer(user))
 	v1.RegisterTemplateProjHTTPServer(srv, service)
 	return srv
+
 }
 func SetUserInfoToContext() middleware.Middleware {
 
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			var simbaId string
+			var userId string
 			var source string
 			if claims, ok := jwt.FromContext(ctx); ok {
-				simbaId = strings.Split(claims.(*util.AccountClaims).Subject, "_")[1]
+				userId = strings.Split(claims.(*util.AccountClaims).Subject, "_")[1]
 				source = strings.Split(claims.(*util.AccountClaims).Subject, "_")[0]
 			}
-			rdb := redisClient.RedisClient
 
-			key := "user:" + simbaId
-			userId, _ := rdb.Get(ctx, key).Result()
 			ctx = context.WithValue(ctx, "userId", userId)
 			ctx = context.WithValue(ctx, "source", source)
+
 			return handler(ctx, req)
 		}
 	}
@@ -113,6 +121,7 @@ func DetermineMinimumVersion(cb *conf.Biz) middleware.Middleware {
 						return nil, e.ErrorClientVersionNeedsToBeUpgraded("客户端版本过低，请升级客户端")
 					}
 				}
+
 			}
 			return handler(ctx, req)
 		}
@@ -231,3 +240,24 @@ func extractError(err error) (log.Level, string) {
 	}
 	return log.LevelInfo, ""
 }
+
+//// 将http请求信息放入ctx
+//func SetHttpInfoToContext() middleware.Middleware {
+//	return func(handler middleware.Handler) middleware.Handler {
+//		return func(ctx context.Context, req interface{}) (interface{}, error) {
+//			if tr, ok := http.RequestFromServerContext(ctx); ok {
+//				if ht, ok := tr.Write(); ok {
+//					ctx = context.WithValue(ctx, "httpInfo", ht.RequestHeader())
+//					ctx = context.WithValue(ctx, "http", ht.Request())
+//				}
+//			}
+//			// 获取responseWriter
+//			if tr, ok := transport.FromServerContext(ctx); ok {
+//				if ht, ok := tr.(*http.Transport); ok {
+//					ctx = context.WithValue(ctx, "responseWriter", ht.Request().Write(())
+//				}
+//			}
+//			return handler(ctx, req)
+//		}
+//	}
+//}
