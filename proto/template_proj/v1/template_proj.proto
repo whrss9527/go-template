@@ -1,5 +1,7 @@
 syntax = "proto3";
 import "google/api/annotations.proto";
+//import "gogoproto/gogo.proto";
+//import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 option go_package = "api/template_proj/v1";
 // option java_multiple_files = true;
 // option java_package = "io.grpc.examples.xxxx";
@@ -16,13 +18,31 @@ service TemplateProj{
     };
   }
 
+  rpc Test2(Test2Req)returns(Test2Reply) {
+    option (google.api.http) = {
+      post: "/api/v1/user/test2"
+      body: "*",
+    };
+  }
 
 }
 message LoginReq{
   // 账号
   string account = 1;
-  string account_type = 2[json_name="account_type"];
+  string account_type = 2[json_name = "account_type"];
 }
 message LoginReply{
   string id = 1;
+  int64 code = 2;
+}
+
+
+message Test2Req{
+  // 账号
+  string account = 1;
+  string account_type = 2[json_name = "account_type"];
+}
+message Test2Reply{
+  string id = 1;
+  int32 code = 2;
 }
