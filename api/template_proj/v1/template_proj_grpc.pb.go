@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	TemplateProj_Login_FullMethodName = "/template_proj.v1.TemplateProj/Login"
+	TemplateProj_Test2_FullMethodName = "/template_proj.v1.TemplateProj/Test2"
 )
 
 // TemplateProjClient is the client API for TemplateProj service.
@@ -28,6 +29,7 @@ const (
 type TemplateProjClient interface {
 	// 登录
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginReply, error)
+	Test2(ctx context.Context, in *Test2Req, opts ...grpc.CallOption) (*Test2Reply, error)
 }
 
 type templateProjClient struct {
@@ -47,12 +49,22 @@ func (c *templateProjClient) Login(ctx context.Context, in *LoginReq, opts ...gr
 	return out, nil
 }
 
+func (c *templateProjClient) Test2(ctx context.Context, in *Test2Req, opts ...grpc.CallOption) (*Test2Reply, error) {
+	out := new(Test2Reply)
+	err := c.cc.Invoke(ctx, TemplateProj_Test2_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TemplateProjServer is the server API for TemplateProj service.
 // All implementations must embed UnimplementedTemplateProjServer
 // for forward compatibility
 type TemplateProjServer interface {
 	// 登录
 	Login(context.Context, *LoginReq) (*LoginReply, error)
+	Test2(context.Context, *Test2Req) (*Test2Reply, error)
 	mustEmbedUnimplementedTemplateProjServer()
 }
 
@@ -62,6 +74,9 @@ type UnimplementedTemplateProjServer struct {
 
 func (UnimplementedTemplateProjServer) Login(context.Context, *LoginReq) (*LoginReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedTemplateProjServer) Test2(context.Context, *Test2Req) (*Test2Reply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Test2 not implemented")
 }
 func (UnimplementedTemplateProjServer) mustEmbedUnimplementedTemplateProjServer() {}
 
@@ -94,6 +109,24 @@ func _TemplateProj_Login_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TemplateProj_Test2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Test2Req)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TemplateProjServer).Test2(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TemplateProj_Test2_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TemplateProjServer).Test2(ctx, req.(*Test2Req))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TemplateProj_ServiceDesc is the grpc.ServiceDesc for TemplateProj service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -104,6 +137,10 @@ var TemplateProj_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _TemplateProj_Login_Handler,
+		},
+		{
+			MethodName: "Test2",
+			Handler:    _TemplateProj_Test2_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
