@@ -2,12 +2,16 @@ package db
 
 import (
 	"fmt"
+	"time"
+
 	log "github.com/sirupsen/logrus"
-	conf "go-template/internal/conf"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-	"time"
+
+	"go-template/internal/conf"
+
+	logdef "go-template/internal/pkg/log"
 )
 
 type Config struct {
@@ -33,6 +37,7 @@ func InitDbConfig(c *conf.Data) {
 			//TablePrefix:   "",   // 表名前缀
 			SingularTable: true, // 使用单数表名
 		},
+		Logger: logdef.NewGormLogger(),
 	}); err != nil {
 		panic(fmt.Errorf("初始化数据库失败: %s \n", err))
 	}
